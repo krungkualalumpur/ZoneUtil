@@ -1,0 +1,14 @@
+{
+    "luau-lsp.sourcemap.rojoProjectFile": "dev.project.json",
+    "luau-lsp.platform.type": "roblox",
+    "luau-lsp.inlayHints.functionReturnTypes": true,
+    "luau-lsp.inlayHints.parameterNames": "all",
+    "luau-lsp.inlayHints.variableTypes": true,
+    "luau-lsp.completion.autocompleteEnd": true,
+    //stylua
+    "editor.formatOnSave": true, //the one that formats  
+    "editor.formatOnPaste": true,
+    "[lua][luau]": {
+        "editor.defaultFormatter": "JohnnyMorganz.stylua"
+    },
+}

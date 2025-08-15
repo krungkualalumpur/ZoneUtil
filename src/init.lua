@@ -367,6 +367,11 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 		end))
 
 		_maid:GiveTask(RunService.Stepped:Connect(function() --checking whether the zone is destroyed or not
+			if self.ZoneParts == nil then
+				_maid:Destroy()
+				return
+			end
+
 			if db == false then
 				db = true
 				for _, plr in Players:GetPlayers() do
@@ -388,10 +393,6 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 					if isInside then
 						onHitEnter(part, priorityPart)
 					end
-				end
-
-				if self.ZoneParts == nil then
-					_maid:Destroy()
 				end
 
 				db = false

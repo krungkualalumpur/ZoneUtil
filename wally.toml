@@ -1,6 +1,6 @@
 [package]
 name = "krungkualalumpur/zone-util"
-version = "0.1.2"
+version = "0.1.3"
 description = "A package to handle zonings, such as player's enter/exit events on a zone defined by baseparts."
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"

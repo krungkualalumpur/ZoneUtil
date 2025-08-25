@@ -114,7 +114,7 @@ local function equipProxy(tbl: any)
 				funcData.Function(proxy._PropertiesProxy, k, v)
 			end
 
-			proxy._PropertiesProxy[k] = v
+			rawset(proxy._PropertiesProxy, k, v)
 		end,
 	})
 	return proxy
@@ -341,6 +341,7 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 						end
 					end
 					if not plrInfo then
+						task.wait()
 						onAddSignal(self.PlayersInside, { Player = player, Zone = zone, Maid = Maid.new() })
 					end
 				end

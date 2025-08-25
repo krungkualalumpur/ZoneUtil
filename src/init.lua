@@ -56,7 +56,7 @@ export type Zone = {
 	Destroy: (Zone) -> nil,
 }
 --constants
-local ZONE_START_DELAY = 1
+local ZONE_START_DELAY = 5
 --local functions
 local function getMetaIndex(haystack: any, needle: any)
 	local mt = getmetatable(haystack)

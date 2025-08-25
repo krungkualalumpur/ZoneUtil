@@ -56,6 +56,7 @@ export type Zone = {
 	Destroy: (Zone) -> nil,
 }
 --constants
+local ZONE_START_DELAY = 1
 --local functions
 local function getMetaIndex(haystack: any, needle: any)
 	local mt = getmetatable(haystack)
@@ -225,20 +226,9 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 
 	local function checkIfInside(zonePart: BasePart, hit: BasePart)
 		local pos = hit.Position
-		--local snappedPos = NumberUtil.snapVector3(zonePart, pos, 0.1)
 		local size = zonePart.Size
 			+ (((zonePart.CFrame - zonePart.CFrame.Position):Inverse() * (hit.CFrame - hit.CFrame.Position)) * hit.Size):Abs()
-		local snappedRelativePos = zonePart.CFrame:PointToObjectSpace(pos) --local snappedRelativePos = zonePart.CFrame:PointToObjectSpace(snappedPos)
-		--print("X: ", math.floor(math.abs(snappedRelativePos.X)) .. " < =" .. math.ceil(size.X*0.5))
-		--print("Y: ", math.floor(math.abs(snappedRelativePos.Y)) .. " < =" .. math.ceil(size.Y*0.5))
-		--print("Z: ", math.floor(math.abs(snappedRelativePos.Z)) .. " < =" .. math.ceil(size.Z*0.5))
-		-- local a = Instance.new("Part")
-		-- a.CFrame = zonePart.CFrame
-		-- a.Size = size
-		-- a.Anchored = true
-		-- a.CanCollide = false
-		-- a.Parent = workspace
-		-- task.delay(0.1, a.Destroy, a)
+		local snappedRelativePos = zonePart.CFrame:PointToObjectSpace(pos)
 
 		if
 			(math.floor(math.abs(snappedRelativePos.X)) <= math.ceil(size.X * 0.5))
@@ -248,9 +238,6 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 			return true
 		end
 
-		--if table.find(workspace:GetPartBoundsInBox(zonePart.CFrame, size), hit) then
-		--return true
-		--end
 		return false
 	end
 
@@ -341,7 +328,6 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 						end
 					end
 					if not plrInfo then
-						task.wait()
 						onAddSignal(self.PlayersInside, { Player = player, Zone = zone, Maid = Maid.new() })
 					end
 				end
@@ -350,10 +336,14 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 	end
 
 	self._Maid:GiveTask(self.onZoneAdded:Connect(function(_maid: Maid)
-		local db = false
+		local db = true
 
 		local part: Part = _maid.Zone :: any
-		--REMEMBER MAID LATER FOR DIS!
+
+		local thread = task.delay(ZONE_START_DELAY, function()
+			db = false
+		end)
+
 		_maid:GiveTask(part.Touched:Connect(function(hit: BasePart)
 			onHitEnter(part, hit)
 		end))
@@ -365,6 +355,7 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 		_maid:GiveTask(part.Destroying:Connect(function()
 			_maid:Destroy()
 			self:RemoveZoneInstance(part)
+			task.cancel(thread)
 		end))
 
 		_maid:GiveTask(RunService.Stepped:Connect(function() --checking whether the zone is destroyed or not
@@ -490,8 +481,6 @@ function Zone:RemoveZoneInstance(zone: Part)
 		if success then
 			maidInfo:Destroy()
 		end
-		--self._itemsQuitted[1] = hit
-		--print("Prabowo ", index)
 	end
 
 	return nil

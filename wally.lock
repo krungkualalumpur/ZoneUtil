@@ -3,8 +3,8 @@
 registry = "test"
 
 [[package]]
-name = "krungkualalumpur/sintesa"
-version = "0.2.32"
+name = "krungkualalumpur/zone-util"
+version = "0.1.6"
 dependencies = [["Maid", "nightcycle/maid@1.1.4"]]
 
 [[package]]

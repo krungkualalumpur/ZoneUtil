@@ -28,6 +28,8 @@ export type Zone = {
 	__index: Zone,
 	_Maid: Maid,
 
+	checkIfInside: (zonePart: BasePart, hit: BasePart) -> boolean,
+
 	new: (ZoneParts: { BasePart }?, maid: Maid?) -> Zone,
 
 	ZoneParts: { [number]: Maid },
@@ -58,6 +60,23 @@ export type Zone = {
 --constants
 local ZONE_START_DELAY = 5
 --local functions
+local function checkIfInside(zonePart: BasePart, hit: BasePart)
+	local pos = hit.Position
+	local size = zonePart.Size
+		+ (((zonePart.CFrame - zonePart.CFrame.Position):Inverse() * (hit.CFrame - hit.CFrame.Position)) * hit.Size):Abs()
+	local snappedRelativePos = zonePart.CFrame:PointToObjectSpace(pos)
+
+	if
+		(math.floor(math.abs(snappedRelativePos.X)) <= math.ceil(size.X * 0.5))
+		and (math.floor(math.abs(snappedRelativePos.Y)) <= math.ceil(size.Y * 0.5))
+		and (math.floor(math.abs(snappedRelativePos.Z)) <= math.ceil(size.Z * 0.5))
+	then
+		return true
+	end
+
+	return false
+end
+
 local function getMetaIndex(haystack: any, needle: any)
 	local mt = getmetatable(haystack)
 
@@ -164,6 +183,8 @@ end
 local Zone = {} :: Zone
 Zone.__index = Zone
 
+Zone.checkIfInside = checkIfInside
+
 function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 	local self: Zone = setmetatable({}, Zone) :: any
 	self._Maid = maid or Maid.new()
@@ -223,23 +244,6 @@ function Zone.new(ZoneParts: { BasePart }?, maid: Maid?)
 	self.onZoneRemoved = self._Maid:GiveTask(GetEvent(self._zonePartsRemoved, nil, function(k, i, v) -- passed arguments
 		return v
 	end))
-
-	local function checkIfInside(zonePart: BasePart, hit: BasePart)
-		local pos = hit.Position
-		local size = zonePart.Size
-			+ (((zonePart.CFrame - zonePart.CFrame.Position):Inverse() * (hit.CFrame - hit.CFrame.Position)) * hit.Size):Abs()
-		local snappedRelativePos = zonePart.CFrame:PointToObjectSpace(pos)
-
-		if
-			(math.floor(math.abs(snappedRelativePos.X)) <= math.ceil(size.X * 0.5))
-			and (math.floor(math.abs(snappedRelativePos.Y)) <= math.ceil(size.Y * 0.5))
-			and (math.floor(math.abs(snappedRelativePos.Z)) <= math.ceil(size.Z * 0.5))
-		then
-			return true
-		end
-
-		return false
-	end
 
 	local function onHitQuit(zone, hit: BasePart, playerQuitted: Player?)
 		--need to roundify number too here lah (or maybe??)

@@ -132,7 +132,7 @@ function zone.new()
 		end))
 	end
 
-	self._maid = Maid.new()
+	self._maid = maid
 	self._areas = {}
 	self._trackedParts = {}
 	self._partsInArea = {}

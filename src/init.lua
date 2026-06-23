@@ -61,6 +61,8 @@ export type Zone = {
 	AddTrackedParts: (Zone, part: BasePart) -> (),
 	RemoveTrackedParts: (Zone, part: BasePart) -> (),
 
+	GetPartsInsideArea: (Zone, Area) -> { BasePart },
+
 	Destroy: (Zone) -> (),
 }
 --constants
@@ -349,6 +351,17 @@ end
 -- 	end)
 -- 	return scriptSignal
 -- end
+function zone:GetPartsInsideArea(area: Area)
+	local partsInArea = assert(self._partsInArea[area], "[Zone module error]: invalid area")
+
+	local parts = {}
+	for k, v in pairs(partsInArea) do
+		if typeof(k) == "Instance" and k:IsA("BasePart") and v == true then
+			table.insert(parts, k)
+		end
+	end
+	return parts
+end
 
 function zone:Destroy()
 	zones[zone.Id] = nil

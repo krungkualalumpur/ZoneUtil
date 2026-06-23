@@ -42,18 +42,21 @@ export type Zone = {
 	_trackedParts: { [number]: BasePart },
 	_areas: { Area },
 
-	_enterListeners: { [Area]: { (Area, BasePart) -> () } },
-	_leftListeners: { [Area]: { (Area, BasePart) -> () } },
+	_enterListeners: { (Area, BasePart) -> () },
+	_leftListeners: { (Area, BasePart) -> () },
 
 	Id: string,
 
 	_update: (Zone) -> (),
+	_handlePartsInAreaDataOnListened: (Zone, area: Area, basePart: BasePart, isEntered: boolean?) -> (),
 
-	OnPartEntered: (Zone, area: Area, onEvent: (Area, BasePart) -> ()) -> CustomScriptSignal<(Area, BasePart) -> ()>,
-	OnPartLeft: (Zone, area: Area, (area: Area, part: BasePart) -> { Disconnect: () -> () }) -> (),
+	OnPartEntered: (Zone, onEvent: (Area, BasePart) -> ()) -> CustomScriptSignal<(Area, BasePart) -> ()>,
+	OnPartLeft: (Zone, (area: Area, part: BasePart) -> ()) -> CustomScriptSignal<(Area, BasePart) -> ()>,
 
 	AddArea: (Zone, cf: CFrame, size: Vector3, shape: Enum.PartType, active: boolean) -> Area,
 	RemoveArea: (Zone, area: Area) -> (),
+
+	SetAreaActive: (Zone, area: Area, bool: boolean) -> (),
 
 	AddTrackedParts: (Zone, part: BasePart) -> (),
 	RemoveTrackedParts: (Zone, part: BasePart) -> (),
@@ -170,6 +173,29 @@ function zone:_update()
 	end
 end
 
+function zone:_handlePartsInAreaDataOnListened(area: Area, basePart: BasePart, isEntered: boolean?)
+	local partsInAreaData = self._partsInArea[area]
+
+	if isEntered then
+		partsInAreaData[basePart] = isEntered
+
+		local enterAreaListeners = self._enterListeners
+		if enterAreaListeners and area.Active then
+			for _, listener in pairs(enterAreaListeners) do
+				listener(area, basePart)
+			end
+		end
+	else
+		partsInAreaData[basePart] = nil
+
+		local leftAreaListeners = self._leftListeners
+		if leftAreaListeners and area.Active then
+			for _, listener in pairs(leftAreaListeners) do
+				listener(area, basePart)
+			end
+		end
+	end
+end
 function zone:AddArea(cf: CFrame, size: Vector3, shape: Enum.PartType, active: boolean)
 	local area = createArea(cf, size, shape, active)
 	table.insert(self._areas, area)
@@ -179,26 +205,27 @@ function zone:AddArea(cf: CFrame, size: Vector3, shape: Enum.PartType, active: b
 		__index = function(tbl, k: BasePart)
 			return partsInAreaData[k]
 		end,
-		__newindex = function(tbl, k: BasePart, v: boolean)
-			if v then
-				partsInAreaData[k] = v
+		__newindex = function(tbl, k: BasePart, v: boolean?)
+			-- if v then
+			-- 	partsInAreaData[k] = v
 
-				local enterAreaListeners = self._enterListeners[area]
-				if enterAreaListeners then
-					for _, v in pairs(enterAreaListeners) do
-						v(area, k)
-					end
-				end
-			else
-				partsInAreaData[k] = nil
+			-- 	local enterAreaListeners = self._enterListeners
+			-- 	if enterAreaListeners and area.Active then
+			-- 		for _, listener in pairs(enterAreaListeners) do
+			-- 			listener(area, k)
+			-- 		end
+			-- 	end
+			-- else
+			-- 	partsInAreaData[k] = nil
 
-				local leftAreaListeners = self._leftListeners[area]
-				if leftAreaListeners then
-					for _, v in pairs(leftAreaListeners) do
-						v(area, k)
-					end
-				end
-			end
+			-- 	local leftAreaListeners = self._leftListeners
+			-- 	if leftAreaListeners and area.Active then
+			-- 		for _, listener in pairs(leftAreaListeners) do
+			-- 			listener(area, k)
+			-- 		end
+			-- 	end
+			-- end
+			self:_handlePartsInAreaDataOnListened(area, k, v)
 		end,
 	}) :: any
 
@@ -229,6 +256,18 @@ function zone:RemoveArea(area: Area)
 	self._partsInArea[area] = nil
 end
 
+function zone:SetAreaActive(area: Area, bool: boolean)
+	local partsInAreaData = self._partsInArea[area]
+
+	area.Active = bool
+
+	if bool == false then
+		for k, v in pairs(partsInAreaData) do
+			self:_handlePartsInAreaDataOnListened(area, k, nil)
+		end
+	end
+end
+
 function zone:AddTrackedParts(part: BasePart)
 	table.insert(self._trackedParts, part)
 end
@@ -238,18 +277,16 @@ function zone:RemoveTrackedParts(part: BasePart)
 	table.remove(self._trackedParts, k)
 end
 
-function zone:OnPartEntered(area: Area, onEvent: (Area, BasePart) -> ())
+function zone:OnPartEntered(onEvent: (Area, BasePart) -> ())
 	-- local scriptSignal = createScriptSignal(function(onEvent: (area: Area, part: BasePart) -> ())
 	local scriptSignal = createScriptSignal(function()
-		local _listeners = self._enterListeners[area] or {}
-		self._enterListeners[area] = _listeners
-		table.insert(_listeners, onEvent)
+		table.insert(self._enterListeners, onEvent)
 
 		return function()
 			-- local k = table.find(_listeners, onEvent)
-			local k = table.find(_listeners, onEvent)
+			local k = table.find(self._enterListeners, onEvent)
 			if k then
-				table.remove(_listeners, k)
+				table.remove(self._enterListeners, k)
 			else
 				warn("[Zone module warning]: listener is already removed!")
 			end
@@ -259,18 +296,16 @@ function zone:OnPartEntered(area: Area, onEvent: (Area, BasePart) -> ())
 	return scriptSignal
 end
 
-function zone:OnPartLeft(area: Area, onEvent: (Area, BasePart) -> ())
+function zone:OnPartLeft(onEvent: (Area, BasePart) -> ())
 	-- local scriptSignal = createScriptSignal(function(onEvent: (area: Area, part: BasePart) -> ())
 	local scriptSignal = createScriptSignal(function()
-		local _listeners = self._leftListeners[area] or {}
-		self._leftListeners[area] = _listeners
-		table.insert(_listeners, onEvent)
+		table.insert(self._leftListeners, onEvent)
 
 		return function()
 			-- local k = table.find(_listeners, onEvent)
-			local k = table.find(_listeners, onEvent)
+			local k = table.find(self._leftListeners, onEvent)
 			if k then
-				table.remove(_listeners, k)
+				table.remove(self._leftListeners, k)
 			else
 				warn("[Zone module warning]: listener is already removed!")
 			end

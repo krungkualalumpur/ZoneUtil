@@ -184,7 +184,7 @@ function zone:_handlePartsInAreaDataOnListened(area: Area, basePart: BasePart, i
 		local enterAreaListeners = self._enterListeners
 		if enterAreaListeners and area.Active then
 			for _, listener in pairs(enterAreaListeners) do
-				listener(area, basePart)
+				task.spawn(listener, area, basePart)
 			end
 		end
 	else
@@ -193,7 +193,7 @@ function zone:_handlePartsInAreaDataOnListened(area: Area, basePart: BasePart, i
 		local leftAreaListeners = self._leftListeners
 		if leftAreaListeners and area.Active then
 			for _, listener in pairs(leftAreaListeners) do
-				listener(area, basePart)
+				task.spawn(listener, area, basePart)
 			end
 		end
 	end

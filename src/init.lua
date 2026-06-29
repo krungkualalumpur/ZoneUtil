@@ -109,16 +109,18 @@ zone.__index = zone
 
 function posIsInArea(area: Area, pos: Vector3)
 	local relativePos = area.CFrame:PointToObjectSpace(pos)
-	local defaultResult = math.abs(relativePos.X) < area.Size.X * 0.5
-		and math.abs(relativePos.Y) < area.Size.Y * 0.5
-		and math.abs(relativePos.Z) < area.Size.Z * 0.5
 
-	local radius = if area.Shape == Enum.PartType.Ball then pos.Y * 0.5 else nil
-	local circlePartTypeResult = if radius
-		then (relativePos.X < radius and relativePos.Y < radius and relativePos.Z < radius)
-		else false
+	if area.Shape == Enum.PartType.Ball then
+		local radius = area.Size.Y * 0.5
+		local circlePartTypeResult = relativePos.Magnitude < radius
+		return circlePartTypeResult
+	else
+		local defaultResult = math.abs(relativePos.X) < area.Size.X * 0.5
+			and math.abs(relativePos.Y) < area.Size.Y * 0.5
+			and math.abs(relativePos.Z) < area.Size.Z * 0.5
 
-	return if area.Shape == Enum.PartType.Ball then circlePartTypeResult else defaultResult
+		return defaultResult
+	end
 end
 
 function zone.new()
@@ -143,7 +145,7 @@ function zone.new()
 	local id = HttpService:GenerateGUID(false)
 	self.Id = id
 
-	zones[id] = zone
+	zones[id] = self
 
 	initZone()
 
@@ -364,7 +366,7 @@ function zone:GetPartsInsideArea(area: Area)
 end
 
 function zone:Destroy()
-	zones[zone.Id] = nil
+	zones[self.Id] = nil
 
 	self._maid:Destroy()
 	deepClear(self)

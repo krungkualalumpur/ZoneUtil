@@ -11,4 +11,6 @@
     "[lua][luau]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
     },
+    //selene
+    "selene.run": "onType"
 }

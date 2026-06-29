@@ -1,6 +1,5 @@
 --!strict
 --services
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 --packages
@@ -153,9 +152,9 @@ function zone.new()
 end
 
 function zone.get(id: string)
-	for _, zone in pairs(zones) do
+	for _, _zone in pairs(zones) do
 		if zone.Id == id then
-			return zone
+			return _zone
 		end
 	end
 
